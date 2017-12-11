@@ -139,7 +139,10 @@ func main() {
 
   listing := ""
 
+  magicNum := []byte{74, 66}
+
   var binListing = flag.Bool("bindump", false, "Create listing as binary instead of hexadecimal")
+  var outFile = flag.String("out", "out.mib", "Binary output file name")
 
   flag.Parse()
 
@@ -148,10 +151,20 @@ func main() {
 
   r := bufio.NewReader(f)
 
+  fout, err := os.Create(*outFile)
+  check(err, "ERR:Error creating output file")
+
+  _, err = fout.Write(magicNum)
+  check(err, "ERR:Error writing to output file")
+
+  fout.Sync()
+
   for addr := 0; true; addr++ {
     line, err := r.ReadString('\n')
     if err == io.EOF {
       break;
+    } else if err != nil {
+      check(err, "ERR:Error reading source code file")
     }
 
     res := parseLine(line, addr)
@@ -164,6 +177,9 @@ func main() {
       } else {
         listing += fmt.Sprintf("0x%06X 0x%06X\n", addr, res)
       }
+
+      fout.WriteString(fmt.Sprintf("%024b", res))
+      fout.Sync()
     }
   }
   fmt.Println("Listing:\n\n" + listing)

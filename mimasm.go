@@ -103,7 +103,6 @@ func parseLine(line string, addr int) (int) {
     inst = strings.TrimFunc(inst, Whitespace)
     args := strings.FieldsFunc(inst, Whitespace)
     opcode := strings.TrimFunc(args[0], Whitespace)
-    fmt.Println(opcode)
     if opcode == "DS" {
       if len(args) > 1 {
         res, err := strconv.ParseInt(args[1], 10, 20)

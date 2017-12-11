@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
   "io"
-  "math"
   "strconv"
   "strings"
 	"os"
@@ -52,7 +51,7 @@ func getOpcode(inst string) (int) {
       case 'D': //ADD
         return 3
       case 'N': //AND
-        return 4
+        return 5
       }
     } else if strings.HasPrefix(inst, "OR") {
       return 5
@@ -155,23 +154,8 @@ func main() {
     res := parseLine(line, addr)
     if res == -88888888 {
       addr--
-    } else if res < 0 { //VERY hacky solution for 24-bit two's complement. Suggestions for fixing welcome.
-      //Get positive value
-      neg := int64(math.Abs(float64(res)))
-      //Substract one before because adding 1 to the string representation would be hard
-      neg--
-      //Create String
-      buf := strconv.FormatInt(neg, 2)
-      //Expand to 24 bits
-      buf = lpad(buf, "0", 24)
-      //Negate each bit - again, very hacky solution.
-      buf = strings.Replace(buf, "1", "2", -1)
-      buf = strings.Replace(buf, "0", "1", -1)
-      buf = strings.Replace(buf, "2", "0", -1)
-      fmt.Println(buf)
-      parsed, _ := strconv.ParseInt(buf, 2, 32)
-      fmt.Printf("0x%06X\n", parsed)
     } else {
+      res = res & 33554431
       fmt.Printf("%024b\n0x%06X\n", res, res)
     }
   }

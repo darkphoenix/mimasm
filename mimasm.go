@@ -88,7 +88,7 @@ func getOpcode(inst string) (int) {
 
 func parseLine(line string, addr int) (int) {
   line = strings.TrimFunc(line, Whitespace)
-  fmt.Println(line)
+  fmt.Print(line)
   if strings.HasPrefix(line, ";") { //It's a comment
     return -88888888
   } else if len(line) == 1 {
@@ -124,8 +124,6 @@ func parseLine(line string, addr int) (int) {
         res, err := strconv.ParseInt(args[1], 10, 20)
         if err != nil {
           if val, ok := labels[args[1]]; ok {
-            fmt.Println(args[1])
-            fmt.Println(labels[args[1]])
             res = int64(val)
           } else {
             res = 0

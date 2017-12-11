@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+  "flag"
 	"fmt"
   "io"
   "strconv"
@@ -11,21 +12,14 @@ import (
 
 var labels map[string]int
 
-func check(e error) {
+func check(e error, errMsg string) {
   if e != nil {
-    panic(e)
+    panic("P:" + errMsg + ":" + e.Error())
   }
 }
 
 func Whitespace(r rune) bool {
     return r == ' ' || r == '\t'
-}
-
-func lpad(s string,pad string, plength int)string{
-    for i:=len(s);i<plength;i++{
-        s=pad+s
-    }
-    return s
 }
 
 func getOpcode(inst string) (int) {
@@ -87,7 +81,6 @@ func getOpcode(inst string) (int) {
 
 func parseLine(line string, addr int) (int) {
   line = strings.TrimFunc(line, Whitespace)
-  fmt.Print(line)
   if strings.HasPrefix(line, ";") { //It's a comment
     return -88888888
   } else if len(line) == 1 {
@@ -96,25 +89,29 @@ func parseLine(line string, addr int) (int) {
     tokens := strings.SplitN(line, ":", 2)
     inst := tokens[0]
     if len(tokens) > 1 { //There is a label
+      fmt.Printf("P:INFO:Setting label %s at 0x%06X\n", tokens[0], addr)
       labels[tokens[0]] = addr;
       inst = tokens[1]
     }
     inst = strings.TrimFunc(inst, Whitespace)
     args := strings.FieldsFunc(inst, Whitespace)
     opcode := strings.TrimFunc(args[0], Whitespace)
-    if opcode == "DS" {
+    if strings.HasPrefix(opcode, "DS") {
       if len(args) > 1 {
-        res, err := strconv.ParseInt(args[1], 10, 20)
+        res, err := strconv.ParseInt(strings.Trim(args[1], "\n"), 10, 20)
         if err != nil {
+          fmt.Printf("P:WARN:Parsing DS parameter failed: %s\n", err.Error())
+          fmt.Printf("P:INFO:DS without parameter, initializing at 0\n")
           return 0
         }
+        fmt.Printf("P:INFO:Setting 0x%06X to %d\n", addr, res)
         return int(res)
       } else {
         return 0
       }
     } else if len(args) > 2 && args[1] == "=" {
       res, err := strconv.ParseInt(args[2], 10, 20)
-      check(err)
+      check(err, fmt.Sprintf("ERR:Error parsing argument for global at 0x%06X", addr))
       labels[args[0]] = int(res)
       return -88888888
     } else {
@@ -140,8 +137,14 @@ func parseLine(line string, addr int) (int) {
 func main() {
   labels = make(map[string]int)
 
-  f, err := os.Open(os.Args[1])
-  check(err)
+  listing := ""
+
+  var binListing = flag.Bool("bindump", false, "Create listing as binary instead of hexadecimal")
+
+  flag.Parse()
+
+  f, err := os.Open(flag.Arg(0))
+  check(err, "ERR:Error opening file")
 
   r := bufio.NewReader(f)
 
@@ -155,9 +158,13 @@ func main() {
     if res == -88888888 {
       addr--
     } else {
-      res = res & 33554431
-      fmt.Printf("%024b\n0x%06X\n", res, res)
+      res = res & 16777215
+      if *binListing {
+        listing += fmt.Sprintf("%024b %024b\n", addr, res)
+      } else {
+        listing += fmt.Sprintf("0x%06X 0x%06X\n", addr, res)
+      }
     }
   }
-  fmt.Println(labels)
+  fmt.Println("Listing:\n\n" + listing)
 }

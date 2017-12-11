@@ -54,11 +54,11 @@ func getOpcode(inst string) (int) {
       case 'N': //AND
         return 4
       }
-    } else if inst == "OR" {
+    } else if strings.HasPrefix(inst, "OR") {
       return 5
-    } else if inst == "XOR" {
+    } else if strings.HasPrefix(inst, "XOR") {
       return 6
-    } else if inst == "EQL" {
+    } else if strings.HasPrefix(inst, "EQL") {
       return 7
     } else if strings.HasPrefix(inst, "JI") {
       return 13
@@ -71,11 +71,11 @@ func getOpcode(inst string) (int) {
       case 'S': //JMS
         return 12
       }
-    } else if inst == "HALT" {
+    } else if strings.HasPrefix(inst, "HALT") {
       return 0xF0
-    } else if inst == "NOT" {
+    } else if strings.HasPrefix(inst, "NOT") {
       return 0xF1
-    } else if inst == "RAR" {
+    } else if strings.HasPrefix(inst, "RAR") {
       return 0xF2
     } else {
       panic("Invalid operation")
@@ -103,6 +103,7 @@ func parseLine(line string, addr int) (int) {
     inst = strings.TrimFunc(inst, Whitespace)
     args := strings.FieldsFunc(inst, Whitespace)
     opcode := strings.TrimFunc(args[0], Whitespace)
+    fmt.Println(opcode)
     if opcode == "DS" {
       if len(args) > 1 {
         res, err := strconv.ParseInt(args[1], 10, 20)
@@ -141,7 +142,7 @@ func parseLine(line string, addr int) (int) {
 func main() {
   labels = make(map[string]int)
 
-  f, err := os.Open("demo.mim")
+  f, err := os.Open(os.Args[1])
   check(err)
 
   r := bufio.NewReader(f)

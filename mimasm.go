@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
   "io"
+  "math"
   "strconv"
   "strings"
 	"os"
@@ -21,6 +22,12 @@ func Whitespace(r rune) bool {
     return r == ' ' || r == '\t'
 }
 
+func lpad(s string,pad string, plength int)string{
+    for i:=len(s);i<plength;i++{
+        s=pad+s
+    }
+    return s
+}
 
 func getOpcode(inst string) (int) {
   if len(inst) >= 2 {
@@ -76,16 +83,16 @@ func getOpcode(inst string) (int) {
   } else {
     panic("Invalid operation")
   }
-  return -1
+  return -88888888
 }
 
 func parseLine(line string, addr int) (int) {
   line = strings.TrimFunc(line, Whitespace)
   fmt.Println(line)
   if strings.HasPrefix(line, ";") { //It's a comment
-    return -1
+    return -88888888
   } else if len(line) == 1 {
-    return -1
+    return -88888888
   } else {
     tokens := strings.SplitN(line, ":", 2)
     inst := tokens[0]
@@ -96,7 +103,6 @@ func parseLine(line string, addr int) (int) {
     inst = strings.TrimFunc(inst, Whitespace)
     args := strings.FieldsFunc(inst, Whitespace)
     opcode := strings.TrimFunc(args[0], Whitespace)
-    fmt.Println(opcode)
     if opcode == "DS" {
       if len(args) > 1 {
         res, err := strconv.ParseInt(args[1], 10, 20)
@@ -111,9 +117,25 @@ func parseLine(line string, addr int) (int) {
       res, err := strconv.ParseInt(args[2], 10, 20)
       check(err)
       labels[args[0]] = int(res)
-      return -1
+      return -88888888
     } else {
-      return getOpcode(opcode)
+      code := getOpcode(opcode)
+      if code < 16 {
+        res, err := strconv.ParseInt(args[1], 10, 20)
+        if err != nil {
+          if val, ok := labels[args[1]]; ok {
+            fmt.Println(args[1])
+            fmt.Println(labels[args[1]])
+            res = int64(val)
+          } else {
+            res = 0
+          }
+        }
+
+        return code * 1048576 + int(res)
+      } else {
+        return code * 65536
+      }
     }
   }
 }
@@ -133,10 +155,24 @@ func main() {
     }
 
     res := parseLine(line, addr)
-    if res == -1 {
+    if res == -88888888 {
       addr--
+    } else if res < 0 { //VERY hacky solution for 24-bit two's complement. Suggestions for fixing welcome.
+      //Get positive value
+      neg := int64(math.Abs(float64(res)))
+      //Substract one before because adding 1 to the string representation would be hard
+      neg--
+      //Create String
+      buf := strconv.FormatInt(neg, 2)
+      //Expand to 24 bits
+      buf = lpad(buf, "0", 24)
+      //Negate each bit - again, very hacky solution.
+      buf = strings.Replace(buf, "1", "2", -1)
+      buf = strings.Replace(buf, "0", "1", -1)
+      buf = strings.Replace(buf, "2", "0", -1)
+      fmt.Println(buf)
     } else {
-      fmt.Println(res)
+      fmt.Printf("%024b\n", res)
     }
   }
   fmt.Println(labels)

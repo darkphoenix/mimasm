@@ -169,8 +169,10 @@ func main() {
       buf = strings.Replace(buf, "0", "1", -1)
       buf = strings.Replace(buf, "2", "0", -1)
       fmt.Println(buf)
+      parsed, _ := strconv.ParseInt(buf, 2, 32)
+      fmt.Printf("0x%06X\n", parsed)
     } else {
-      fmt.Printf("%024b\n", res)
+      fmt.Printf("%024b\n0x%06X\n", res, res)
     }
   }
   fmt.Println(labels)

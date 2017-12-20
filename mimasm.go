@@ -45,7 +45,7 @@ func getOpcode(inst string) (int) {
       case 'D': //ADD
         return 3
       case 'N': //AND
-        return 5
+        return 4
       }
     } else if strings.HasPrefix(inst, "OR") {
       return 5
